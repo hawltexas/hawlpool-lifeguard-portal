@@ -128,7 +128,7 @@ module.exports = router;
 function dashboardHTML(user, announcements, schedule, payDates, docs) {
   const adminBanner = user.isAdmin ? `
     <div class="admin-banner">
-      <span>⚙️ Admin Mode Active</span>
+      <span>Admin Mode Active</span>
       <a href="/admin">Manage Portal →</a>
     </div>` : '';
 
@@ -190,14 +190,14 @@ function dashboardHTML(user, announcements, schedule, payDates, docs) {
       <div class="dash-col dash-col-main">
         <section class="dash-section">
           <div class="section-header">
-            <h2>📢 Announcements</h2>
+            <h2>Announcements</h2>
           </div>
           <div class="ann-list">${annSection}</div>
         </section>
 
         <section class="dash-section">
           <div class="section-header">
-            <h2>📅 Upcoming Schedule</h2>
+            <h2>Upcoming Schedule</h2>
             <a href="/portal/schedule" class="section-link">View all →</a>
           </div>
           ${schedSection}
@@ -207,7 +207,7 @@ function dashboardHTML(user, announcements, schedule, payDates, docs) {
       <div class="dash-col dash-col-side">
         <section class="dash-section">
           <div class="section-header">
-            <h2>💰 Next Pay Dates</h2>
+            <h2>Next Pay Dates</h2>
             <a href="/portal/pay" class="section-link">Full schedule →</a>
           </div>
           <div class="pay-list">${paySection}</div>
@@ -215,18 +215,18 @@ function dashboardHTML(user, announcements, schedule, payDates, docs) {
 
         <section class="dash-section">
           <div class="section-header">
-            <h2>📁 Quick Documents</h2>
+            <h2>Quick Documents</h2>
             <a href="/portal/documents" class="section-link">All docs →</a>
           </div>
           ${docsSection}
         </section>
 
         <section class="dash-section info-section">
-          <h2>📞 Important Contacts</h2>
+          <h2>Important Contacts</h2>
           <div class="contact-list">
             <div class="contact-item">
               <span class="contact-role">Pool Manager</span>
-              <a href="tel:+19727407232" class="contact-val">(972) 740-7232</a>
+              <a href="tel:+19725231685" class="contact-val">(972) 523-1685</a>
             </div>
             <div class="contact-item">
               <span class="contact-role">Emergency</span>
@@ -234,7 +234,7 @@ function dashboardHTML(user, announcements, schedule, payDates, docs) {
             </div>
             <div class="contact-item">
               <span class="contact-role">Email</span>
-              <a href="mailto:brant@brantborden.com" class="contact-val">brant@brantborden.com</a>
+              <a href="mailto:jennifer@hawlpool.com" class="contact-val">jennifer@hawlpool.com</a>
             </div>
           </div>
         </section>
@@ -266,7 +266,7 @@ function scheduleHTML(events) {
   return `
   <div class="portal-wrap">
     <div class="page-header">
-      <h1>📅 Schedule & Events</h1>
+      <h1>Schedule & Events</h1>
       <p class="page-sub">Upcoming shifts, training dates, and pool events.</p>
     </div>
     <div class="sched-list">${content}</div>
@@ -308,11 +308,11 @@ function payHTML(rows) {
   return `
   <div class="portal-wrap">
     <div class="page-header">
-      <h1>💰 Pay Schedule</h1>
+      <h1>Pay Schedule</h1>
       <p class="page-sub">Your pay dates and period information. Questions? Email <a href="mailto:brant@brantborden.com">brant@brantborden.com</a>.</p>
     </div>
     <div class="info-card">
-      <strong>💡 Pay Info:</strong> HAWL Pool staff are paid bi-weekly via direct deposit. Make sure your banking info is on file with management.
+      <strong>Pay Info:</strong> HAWL Pool staff are paid bi-weekly via direct deposit. Make sure your banking info is on file with management.
     </div>
     ${content}
   </div>`;
@@ -320,11 +320,11 @@ function payHTML(rows) {
 
 function documentsHTML(grouped) {
   const categoryLabels = {
-    policy:    '📋 Policies & Procedures',
-    training:  '🎓 Training & Certification',
-    forms:     '📝 Forms & Applications',
-    emergency: '🚨 Emergency Protocols',
-    general:   '📁 General Documents',
+    policy:    'Policies & Procedures',
+    training:  'Training & Certification',
+    forms:     'Forms & Applications',
+    emergency: 'Emergency Protocols',
+    general:   'General Documents',
   };
 
   const content = Object.keys(grouped).length ? Object.entries(grouped).map(([cat, docs]) => `
@@ -347,7 +347,7 @@ function documentsHTML(grouped) {
   return `
   <div class="portal-wrap">
     <div class="page-header">
-      <h1>📁 Documents</h1>
+      <h1>Documents</h1>
       <p class="page-sub">Policies, training materials, forms, and emergency protocols.</p>
     </div>
     <div class="doc-sections">${content}</div>
