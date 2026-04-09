@@ -325,11 +325,11 @@ function adminHTML(guards, docs, announcements, schedule, payDates, msg) {
 
     <!-- TABS -->
     <div class="admin-tabs">
-      <button class="tab-btn active" onclick="showTab('guards')">👥 Staff</button>
-      <button class="tab-btn" onclick="showTab('announcements')">📢 Announcements</button>
-      <button class="tab-btn" onclick="showTab('schedule')">📅 Schedule</button>
-      <button class="tab-btn" onclick="showTab('pay')">💰 Pay</button>
-      <button class="tab-btn" onclick="showTab('documents')">📁 Documents</button>
+      <button class="tab-btn active" onclick="showTab('guards')">Staff</button>
+      <button class="tab-btn" onclick="showTab('announcements')">Announcements</button>
+      <button class="tab-btn" onclick="showTab('schedule')">Schedule</button>
+      <button class="tab-btn" onclick="showTab('pay')">Pay</button>
+      <button class="tab-btn" onclick="showTab('documents')">Documents</button>
     </div>
 
     <!-- STAFF TAB -->
