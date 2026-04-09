@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: hawl-lifeguard-portal
+    env: node
+    plan: free
+    buildCommand: npm install --unsafe-perm
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_REGION
+        value: us-east-1
+      - key: S3_BUCKET_NAME
+        value: hawl-lifeguard-portal
+      - key: ADMIN_EMAIL
+        value: brant@brantborden.com
+      - key: ADMIN_PASSWORD
+        sync: false
