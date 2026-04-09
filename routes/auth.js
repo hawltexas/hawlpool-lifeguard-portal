@@ -111,7 +111,7 @@ function loginHTML(error) {
           </div>
           <button type="submit" class="btn-primary btn-block">Sign In to Portal</button>
         </form>
-        <p class="login-footer-note">Issues logging in? Contact <a href="mailto:brant@brantborden.com">brant@brantborden.com</a></p>
+        <p class="login-footer-note">Issues logging in? Contact <a href="mailto:brant@hawlpool.com">brant@hawlpool.com</a></p>
       </div>
     </div>
   </div>`;
