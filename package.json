@@ -1,7 +1,7 @@
 {
   "name": "hawl-lifeguard-portal",
   "version": "1.0.0",
-  "description": "HAWL Pool Lifeguard Staff Portal - lifeguard.hawlpool.com",
+  "description": "HAWL Pool Lifeguard Staff Portal - staff.hawlpool.com",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
