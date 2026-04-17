@@ -41,7 +41,7 @@ function renderPage(title, bodyHTML, user = null) {
   <main>${bodyHTML}</main>
   <footer class="portal-footer">
     <div class="footer-inner">
-      <span>&copy; 2026 HAWL Pool &mdash; The Hideaway at Walnut Lake. All rights reserved.</span>
+      <span>&copy; 2026 HAWL Pool &mdash; Hideaway Lake Club. All rights reserved.</span>
       <span>Staff use only &mdash; Confidential</span>
     </div>
   </footer>
