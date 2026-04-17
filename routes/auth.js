@@ -96,7 +96,7 @@ function loginHTML(error) {
         <span class="login-icon">🏊</span>
         <span class="login-badge">STAFF ONLY</span>
         <h1 class="login-title">Lifeguard Portal</h1>
-        <p class="login-sub">HAWL Pool &mdash; The Hideaway at Walnut Lake</p>
+        <p class="login-sub">HAWL Pool &mdash; Hideaway Lake Club</p>
       </div>
       <div class="login-body">
         ${errBlock}
