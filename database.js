@@ -7,15 +7,16 @@ const pool = new Pool({
 });
 
 async function initialize() {
-  // Users table (lifeguards)
+  // Users table
   await pool.query(`
     CREATE TABLE IF NOT EXISTS lifeguards (
       id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
       email TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
-      role TEXT DEFAULT 'lifeguard',
+      role TEXT DEFAULT 'staff',
       is_admin BOOLEAN DEFAULT false,
+      admin_role TEXT DEFAULT 'none',
       is_active BOOLEAN DEFAULT true,
       phone TEXT,
       cert_expiry DATE,
@@ -24,6 +25,17 @@ async function initialize() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       last_login TIMESTAMP
     );
+  `);
+
+  await pool.query(`ALTER TABLE lifeguards ADD COLUMN IF NOT EXISTS admin_role TEXT DEFAULT 'none';`);
+  await pool.query(`ALTER TABLE lifeguards ALTER COLUMN role SET DEFAULT 'staff';`);
+  await pool.query(`
+    UPDATE lifeguards
+    SET admin_role = CASE
+      WHEN is_admin = true AND (admin_role IS NULL OR admin_role = '' OR admin_role = 'none') THEN 'admin'
+      WHEN is_admin = false THEN 'none'
+      ELSE admin_role
+    END
   `);
 
   // Documents table
@@ -79,20 +91,30 @@ async function initialize() {
     );
   `);
 
-  // Seed admin if not present
+  // Seed operations admin if not present
+  const adminEmail = (process.env.ADMIN_EMAIL || 'brant@brantborden.com').toLowerCase();
   const admin = await pool.query(
     'SELECT id FROM lifeguards WHERE email = $1',
-    ['brant@brantborden.com']
+    [adminEmail]
   );
   if (admin.rows.length === 0) {
     const hash = bcrypt.hashSync(process.env.ADMIN_PASSWORD || 'ihatebash001', 12);
     await pool.query(
-      `INSERT INTO lifeguards (name, email, password, is_admin, role)
-       VALUES ($1, $2, $3, true, 'admin')`,
-      ['Brant Borden', 'brant@brantborden.com', hash]
+      `INSERT INTO lifeguards (name, email, password, is_admin, admin_role, role)
+       VALUES ($1, $2, $3, true, 'operations_admin', 'operations')`,
+      ['Brant Borden', adminEmail, hash]
     );
     console.log('Admin account seeded.');
   }
+
+  await pool.query(
+    `UPDATE lifeguards
+     SET is_admin = true,
+         admin_role = 'operations_admin',
+         role = CASE WHEN role IS NULL OR role = '' OR role = 'staff' THEN 'operations' ELSE role END
+     WHERE email = $1`,
+    [adminEmail]
+  );
 
   console.log('Database ready.');
 }
