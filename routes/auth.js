@@ -22,17 +22,20 @@ router.post('/login', async (req, res) => {
       'SELECT * FROM lifeguards WHERE email = $1 AND is_active = true',
       [email.toLowerCase().trim()]
     );
-    const guard = result.rows[0];
-    if (!guard || !bcrypt.compareSync(password, guard.password)) {
+    const userRecord = result.rows[0];
+    if (!userRecord || !bcrypt.compareSync(password, userRecord.password)) {
       req.session.loginError = 'Invalid credentials. Please try again.';
       return res.redirect('/auth/login');
     }
     req.session.regenerate(async (err) => {
       if (err) return res.redirect('/auth/login');
-      req.session.userId   = guard.id;
-      req.session.userName = guard.name;
-      req.session.isAdmin  = !!guard.is_admin;
-      await pool.query('UPDATE lifeguards SET last_login = NOW() WHERE id = $1', [guard.id]);
+      req.session.userId = userRecord.id;
+      req.session.userName = userRecord.name;
+      req.session.userRole = userRecord.role || 'staff';
+      req.session.isAdmin = !!userRecord.is_admin;
+      req.session.adminRole = userRecord.admin_role || (userRecord.is_admin ? 'admin' : 'none');
+      req.session.isOperationsAdmin = req.session.adminRole === 'operations_admin';
+      await pool.query('UPDATE lifeguards SET last_login = NOW() WHERE id = $1', [userRecord.id]);
       const returnTo = req.session.returnTo || '/portal';
       delete req.session.returnTo;
       res.redirect(returnTo);
@@ -52,7 +55,11 @@ router.get('/change-password', (req, res) => {
   if (!req.session.userId) return res.redirect('/auth/login');
   const msg = req.session.pwMsg || null;
   delete req.session.pwMsg;
-  res.send(renderPage('Change Password', changePwHTML(msg), { name: req.session.userName, isAdmin: req.session.isAdmin }));
+  res.send(renderPage('Change Password', changePwHTML(msg), {
+    name: req.session.userName,
+    isAdmin: req.session.isAdmin,
+    isOperationsAdmin: req.session.isOperationsAdmin,
+  }));
 });
 
 router.post('/change-password', async (req, res) => {
@@ -68,13 +75,13 @@ router.post('/change-password', async (req, res) => {
   }
   try {
     const result = await pool.query('SELECT * FROM lifeguards WHERE id = $1', [req.session.userId]);
-    const guard = result.rows[0];
-    if (!bcrypt.compareSync(current_password, guard.password)) {
+    const userRecord = result.rows[0];
+    if (!bcrypt.compareSync(current_password, userRecord.password)) {
       req.session.pwMsg = { type: 'error', text: 'Current password is incorrect.' };
       return res.redirect('/auth/change-password');
     }
     const hash = bcrypt.hashSync(new_password, 12);
-    await pool.query('UPDATE lifeguards SET password = $1 WHERE id = $2', [hash, guard.id]);
+    await pool.query('UPDATE lifeguards SET password = $1 WHERE id = $2', [hash, userRecord.id]);
     req.session.pwMsg = { type: 'success', text: 'Password updated successfully.' };
     res.redirect('/auth/change-password');
   } catch (err) {
@@ -95,8 +102,8 @@ function loginHTML(error) {
         <div class="login-wave"></div>
         <span class="login-icon">🏊</span>
         <span class="login-badge">STAFF ONLY</span>
-        <h1 class="login-title">Lifeguard Portal</h1>
-        <p class="login-sub">Hideaway Lake Club Pool</p>
+        <h1 class="login-title">HAWL Staff Portal</h1>
+        <p class="login-sub">Hideaway Texas Staff Access</p>
       </div>
       <div class="login-body">
         ${errBlock}
@@ -111,7 +118,7 @@ function loginHTML(error) {
           </div>
           <button type="submit" class="btn-primary btn-block">Sign In to Portal</button>
         </form>
-        <p class="login-footer-note">Issues logging in? Contact <a href="mailto:brant@hawlpool.com">brant@hawlpool.com</a></p>
+        <p class="login-footer-note">Issues logging in? Contact <a href="mailto:brant@brantborden.com">brant@brantborden.com</a></p>
       </div>
     </div>
   </div>`;
