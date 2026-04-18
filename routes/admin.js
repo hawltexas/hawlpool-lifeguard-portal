@@ -325,11 +325,11 @@ function adminHTML(guards, docs, announcements, schedule, payDates, msg) {
 
     <!-- TABS -->
     <div class="admin-tabs">
-      <button class="tab-btn active" onclick="showTab('guards')">Staff</button>
-      <button class="tab-btn" onclick="showTab('announcements')">Announcements</button>
-      <button class="tab-btn" onclick="showTab('schedule')">Schedule</button>
-      <button class="tab-btn" onclick="showTab('pay')">Pay</button>
-      <button class="tab-btn" onclick="showTab('documents')">Documents</button>
+      <button class="tab-btn active" onclick="showTab(event, 'guards')">Staff</button>
+      <button class="tab-btn" onclick="showTab(event, 'announcements')">Announcements</button>
+      <button class="tab-btn" onclick="showTab(event, 'schedule')">Schedule</button>
+      <button class="tab-btn" onclick="showTab(event, 'pay')">Pay</button>
+      <button class="tab-btn" onclick="showTab(event, 'documents')">Documents</button>
     </div>
 
     <!-- STAFF TAB -->
@@ -500,7 +500,7 @@ function adminHTML(guards, docs, announcements, schedule, payDates, msg) {
       document.getElementById('reset-title').textContent = 'Reset Password — ' + name;
       document.getElementById('reset-modal').style.display = 'flex';
     }
-    function showTab(name) {
+    function showTab(event, name) {
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.getElementById('tab-' + name).classList.add('active');
