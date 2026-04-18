@@ -500,11 +500,13 @@ function adminHTML(guards, docs, announcements, schedule, payDates, msg) {
       document.getElementById('reset-title').textContent = 'Reset Password — ' + name;
       document.getElementById('reset-modal').style.display = 'flex';
     }
-    function showTab(event, name) {
+    function showTab(e, name) {
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
       document.getElementById('tab-' + name).classList.add('active');
-      event.target.classList.add('active');
+
+      e.currentTarget.classList.add('active'); // 🔥 FIXED
     }
   </script>`;
 }
