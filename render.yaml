@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: hawl-lifeguard-portal
+    name: hawl-staff-portal
     env: node
     plan: free
     buildCommand: npm install --unsafe-perm
@@ -19,7 +19,7 @@ services:
       - key: AWS_REGION
         value: us-east-1
       - key: S3_BUCKET_NAME
-        value: hawl-lifeguard-portal
+        value: hawl-staff-portal
       - key: ADMIN_EMAIL
         value: brant@brantborden.com
       - key: ADMIN_PASSWORD
