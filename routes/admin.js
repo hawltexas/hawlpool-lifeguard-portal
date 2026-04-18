@@ -4,6 +4,8 @@ const router   = express.Router();
 const AWS      = require('aws-sdk');
 const multer   = require('multer');
 const multerS3 = require('multer-s3');
+const path     = require('path');
+const fs       = require('fs');
 const { pool } = require('../database');
 const { requireAdmin } = require('../middleware/auth');
 const { renderPage }   = require('../utils/render');
@@ -15,15 +17,60 @@ const s3 = new AWS.S3({
   region:          process.env.AWS_REGION,
 });
 
+const localDocumentsDir = path.join(__dirname, '..', 'public', 'documents');
+if (!fs.existsSync(localDocumentsDir)) fs.mkdirSync(localDocumentsDir, { recursive: true });
+
+function safeUploadName(originalName = 'upload') {
+  const ext = path.extname(originalName);
+  const base = path.basename(originalName, ext)
+    .replace(/[^a-zA-Z0-9-_]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '') || 'upload';
+  return `${Date.now()}-${base}${ext.toLowerCase()}`;
+}
+
+const storage = process.env.S3_BUCKET_NAME
+  ? multerS3({
+      s3,
+      bucket: process.env.S3_BUCKET_NAME,
+      key: (req, file, cb) => cb(null, safeUploadName(file.originalname)),
+    })
+  : multer.diskStorage({
+      destination: (req, file, cb) => cb(null, localDocumentsDir),
+      filename: (req, file, cb) => cb(null, safeUploadName(file.originalname)),
+    });
+
 const upload = multer({
-  storage: multerS3({
-    s3,
-    bucket: process.env.S3_BUCKET_NAME,
-    acl: 'private',
-    key: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
-  }),
+  storage,
+  fileFilter: (req, file, cb) => {
+    const allowed = new Set(['.pdf', '.doc', '.docx', '.png', '.jpg', '.jpeg']);
+    const ext = path.extname(file.originalname || '').toLowerCase();
+    if (!allowed.has(ext)) {
+      return cb(new Error('Only PDF, Word, PNG, and JPG files are allowed.'));
+    }
+    cb(null, true);
+  },
   limits: { fileSize: 20 * 1024 * 1024 }, // 20 MB
 });
+
+function handleUpload(fieldName) {
+  const middleware = upload.single(fieldName);
+  return (req, res, next) => {
+    middleware(req, res, err => {
+      if (!err) return next();
+
+      console.error('Document upload error:', err);
+      const message = err instanceof multer.MulterError
+        ? (err.code === 'LIMIT_FILE_SIZE'
+            ? 'Upload failed: files must be 20 MB or smaller.'
+            : `Upload failed: ${err.message}`)
+        : (err && err.message ? `Upload failed: ${err.message}` : 'Upload failed. Please try again.');
+
+      req.session.adminMsg = { type: 'error', text: message };
+      return res.redirect('/admin');
+    });
+  };
+}
 
 router.use(requireAdmin);
 
@@ -99,13 +146,13 @@ router.post('/guard/reset-password', async (req, res) => {
 });
 
 // ── Documents CRUD ─────────────────────────────────────────────────────
-router.post('/document/add', upload.single('file'), async (req, res) => {
+router.post('/document/add', handleUpload('file'), async (req, res) => {
   const { title, description, category, filename } = req.body;
   if (!title || (!req.file && !filename)) {
     req.session.adminMsg = { type: 'error', text: 'Title and file are required.' };
     return res.redirect('/admin');
   }
-  const filePath = req.file ? req.file.key : filename.trim();
+  const filePath = req.file ? (req.file.key || req.file.filename) : filename.trim();
   try {
     await pool.query(
       `INSERT INTO documents (title, description, filename, category) VALUES ($1,$2,$3,$4)`,
