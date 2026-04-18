@@ -252,7 +252,7 @@ function adminHTML(guards, docs, announcements, schedule, payDates, msg) {
             <input type="hidden" name="id" value="${g.id}">
             <button type="submit" class="btn-tbl">${g.is_active ? 'Disable' : 'Enable'}</button>
           </form>
-          <button class="btn-tbl" onclick="showReset(${g.id},'${g.name}')">Reset PW</button>`}
+          <button type="button" class="btn-tbl" onclick="showReset(${g.id},'${g.name}')">Reset PW</button>`}
       </td>
     </tr>`).join('');
 
@@ -325,11 +325,11 @@ function adminHTML(guards, docs, announcements, schedule, payDates, msg) {
 
     <!-- TABS -->
     <div class="admin-tabs">
-      <button class="tab-btn active" onclick="showTab(event, 'guards')">Staff</button>
-      <button class="tab-btn" onclick="showTab(event, 'announcements')">Announcements</button>
-      <button class="tab-btn" onclick="showTab(event, 'schedule')">Schedule</button>
-      <button class="tab-btn" onclick="showTab(event, 'pay')">Pay</button>
-      <button class="tab-btn" onclick="showTab(event, 'documents')">Documents</button>
+      <button type="button" class="tab-btn active" data-tab="guards">Staff</button>
+      <button type="button" class="tab-btn" data-tab="announcements">Announcements</button>
+      <button type="button" class="tab-btn" data-tab="schedule">Schedule</button>
+      <button type="button" class="tab-btn" data-tab="pay">Pay</button>
+      <button type="button" class="tab-btn" data-tab="documents">Documents</button>
     </div>
 
     <!-- STAFF TAB -->
@@ -494,19 +494,5 @@ function adminHTML(guards, docs, announcements, schedule, payDates, msg) {
     </div>
   </div>
 
-  <script>
-    function showReset(id, name) {
-      document.getElementById('reset-id').value = id;
-      document.getElementById('reset-title').textContent = 'Reset Password — ' + name;
-      document.getElementById('reset-modal').style.display = 'flex';
-    }
-    function showTab(e, name) {
-      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-
-      document.getElementById('tab-' + name).classList.add('active');
-
-      e.currentTarget.classList.add('active'); // 🔥 FIXED
-    }
-  </script>`;
+  <script src="/public/js/admin.js"></script>`;
 }
