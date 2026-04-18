@@ -60,6 +60,20 @@ function renderPage(title, bodyHTML, user = null) {
       if (toggle) toggle.textContent = '☰';
     }));
   </script>
+  <script>
+    function togglePassword(inputId, btn) {
+      const input = document.getElementById(inputId);
+      const img = btn.querySelector("img");
+
+    if (input.type === "password") {
+      input.type = "text";
+      img.src = "/icons/eye-off.svg";
+    } else {
+      input.type = "password";
+      img.src = "/icons/eye.svg";
+    }
+  }
+  </script>
 </body>
 </html>`;
 }
