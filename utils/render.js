@@ -18,7 +18,7 @@ function renderPage(title, bodyHTML, user = null) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>${title} | HAWL Pool Lifeguard Portal</title>
+  <title>${title} | HAWL Staff Portal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -30,8 +30,8 @@ function renderPage(title, bodyHTML, user = null) {
       <a href="/" class="wordmark">
         <span class="wordmark-logo">🏊</span>
         <div class="wordmark-text">
-          <span class="wordmark-top">HAWL Pool</span>
-          <span class="wordmark-sub">Lifeguard Portal</span>
+          <span class="wordmark-top">Hideaway Texas</span>
+          <span class="wordmark-sub">HAWL Staff Portal</span>
         </div>
       </a>
       ${user ? `<button class="nav-toggle" id="navToggle" aria-label="Menu">&#9776;</button>` : ''}
@@ -41,7 +41,7 @@ function renderPage(title, bodyHTML, user = null) {
   <main>${bodyHTML}</main>
   <footer class="portal-footer">
     <div class="footer-inner">
-      <span>&copy; 2026 HAWL Pool &mdash; Hideaway Lake Club. All rights reserved.</span>
+      <span>&copy; 2026 Hideaway Texas &mdash; HAWL Staff Portal. All rights reserved.</span>
       <span>Staff use only &mdash; Confidential</span>
     </div>
   </footer>
