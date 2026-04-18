@@ -1,17 +1,24 @@
 const express = require('express');
-const path    = require('path');
-const fs      = require('fs');
-const router  = express.Router();
-const AWS     = require('aws-sdk');
+const path = require('path');
+const fs = require('fs');
+const router = express.Router();
+const AWS = require('aws-sdk');
 const { pool } = require('../database');
 const { requireLogin } = require('../middleware/auth');
-const { renderPage }   = require('../utils/render');
+const { renderPage } = require('../utils/render');
 
 router.use(requireLogin);
 
-// ── Dashboard ─────────────────────────────────────────────────────────
+function currentUser(req) {
+  return {
+    name: req.session.userName,
+    isAdmin: req.session.isAdmin,
+    isOperationsAdmin: req.session.isOperationsAdmin,
+  };
+}
+
 router.get('/', async (req, res) => {
-  const user = { name: req.session.userName, isAdmin: req.session.isAdmin };
+  const user = currentUser(req);
   try {
     const [annRes, schedRes, payRes, docsRes] = await Promise.all([
       pool.query('SELECT * FROM announcements WHERE is_active = true ORDER BY created_at DESC LIMIT 5'),
@@ -26,9 +33,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// ── Schedule page ──────────────────────────────────────────────────────
 router.get('/schedule', async (req, res) => {
-  const user = { name: req.session.userName, isAdmin: req.session.isAdmin };
+  const user = currentUser(req);
   try {
     const result = await pool.query(
       `SELECT * FROM schedule_events WHERE is_active = true ORDER BY event_date ASC, start_time ASC`
@@ -40,9 +46,8 @@ router.get('/schedule', async (req, res) => {
   }
 });
 
-// ── Pay Schedule page ──────────────────────────────────────────────────
 router.get('/pay', async (req, res) => {
-  const user = { name: req.session.userName, isAdmin: req.session.isAdmin };
+  const user = currentUser(req);
   try {
     const result = await pool.query(
       `SELECT * FROM pay_schedule WHERE is_active = true ORDER BY pay_date ASC`
@@ -54,9 +59,8 @@ router.get('/pay', async (req, res) => {
   }
 });
 
-// ── Documents page ─────────────────────────────────────────────────────
 router.get('/documents', async (req, res) => {
-  const user = { name: req.session.userName, isAdmin: req.session.isAdmin };
+  const user = currentUser(req);
   try {
     const result = await pool.query(
       `SELECT * FROM documents WHERE is_active = true ORDER BY category, uploaded_at DESC`
@@ -73,7 +77,6 @@ router.get('/documents', async (req, res) => {
   }
 });
 
-// ── Document download (S3 signed URL or local) ─────────────────────────
 router.get('/document/:id', async (req, res) => {
   try {
     const docRes = await pool.query(
@@ -83,7 +86,6 @@ router.get('/document/:id', async (req, res) => {
     const doc = docRes.rows[0];
     if (!doc) return res.status(404).send('Document not found.');
 
-    // S3 file (filename starts with timestamp- pattern or has no path sep)
     const isS3 = doc.filename && !doc.filename.startsWith('/') && !doc.filename.includes('\\');
     const looksLocal = fs.existsSync(path.join(__dirname, '..', 'public', 'documents', path.basename(doc.filename)));
 
@@ -101,7 +103,6 @@ router.get('/document/:id', async (req, res) => {
       return res.redirect(url);
     }
 
-    // Local file fallback
     const safeFilename = path.basename(doc.filename);
     const filePath = path.join(__dirname, '..', 'public', 'documents', safeFilename);
     if (!fs.existsSync(filePath)) return res.status(404).send('File not found on server.');
@@ -123,13 +124,11 @@ router.get('/document/:id', async (req, res) => {
 
 module.exports = router;
 
-// ─────────────── HTML TEMPLATES ───────────────────────────────────────
-
 function dashboardHTML(user, announcements, schedule, payDates, docs) {
   const adminBanner = user.isAdmin ? `
     <div class="admin-banner">
-      <span>Admin Mode Active</span>
-      <a href="/admin">Manage Portal →</a>
+      <span>Admin Access Enabled</span>
+      <a href="/admin">Manage Portal -></a>
     </div>` : '';
 
   const annSection = announcements.length ? announcements.map(a => `
@@ -140,7 +139,7 @@ function dashboardHTML(user, announcements, schedule, payDates, docs) {
         <span class="ann-date">${fmtDate(a.created_at)}</span>
       </div>
       <p class="ann-body">${a.body}</p>
-      ${a.author ? `<span class="ann-author">— ${a.author}</span>` : ''}
+      ${a.author ? `<span class="ann-author">- ${a.author}</span>` : ''}
     </div>`).join('') :
     `<p class="empty-state">No announcements right now. Check back soon.</p>`;
 
@@ -152,8 +151,8 @@ function dashboardHTML(user, announcements, schedule, payDates, docs) {
       </div>
       <div class="event-info">
         <strong>${e.title}</strong>
-        ${e.start_time ? `<span class="event-time">⏰ ${e.start_time}${e.end_time ? ' – ' + e.end_time : ''}</span>` : ''}
-        ${e.location ? `<span class="event-loc">📍 ${e.location}</span>` : ''}
+        ${e.start_time ? `<span class="event-time">Time: ${e.start_time}${e.end_time ? ' - ' + e.end_time : ''}</span>` : ''}
+        ${e.location ? `<span class="event-loc">Location: ${e.location}</span>` : ''}
         ${e.description ? `<span class="event-desc">${e.description}</span>` : ''}
       </div>
     </div>`).join('')}</div>` :
@@ -162,17 +161,17 @@ function dashboardHTML(user, announcements, schedule, payDates, docs) {
   const paySection = payDates.length ? payDates.map(p => `
     <div class="pay-item">
       <span class="pay-label">${p.period_label}</span>
-      <span class="pay-date">💳 ${fmtDate(p.pay_date)}</span>
+      <span class="pay-date">Pay Date: ${fmtDate(p.pay_date)}</span>
       ${p.notes ? `<span class="pay-notes">${p.notes}</span>` : ''}
     </div>`).join('') :
     `<p class="empty-state">No upcoming pay dates on file.</p>`;
 
   const docsSection = docs.length ? `<div class="doc-grid-sm">${docs.map(d => `
     <a href="/portal/document/${d.id}" class="doc-card-sm" target="_blank" rel="noopener">
-      <span class="doc-icon-sm">📄</span>
+      <span class="doc-icon-sm">Doc</span>
       <span class="doc-title-sm">${d.title}</span>
     </a>`).join('')}
-    <a href="/portal/documents" class="doc-card-sm doc-more">View all documents →</a>
+    <a href="/portal/documents" class="doc-card-sm doc-more">View all documents -></a>
   </div>` : `<p class="empty-state">No documents uploaded yet. <a href="/portal/documents">Browse documents</a></p>`;
 
   return `
@@ -180,8 +179,8 @@ function dashboardHTML(user, announcements, schedule, payDates, docs) {
     ${adminBanner}
     <div class="dash-welcome">
       <div class="welcome-text">
-        <h1>Hey, ${user.name.split(' ')[0]} 👋</h1>
-        <p>Welcome to the HAWL Pool Lifeguard Portal. Everything you need for your shift is right here.</p>
+        <h1>Hey, ${user.name.split(' ')[0]}</h1>
+        <p>Welcome to the HAWL Staff Portal. Announcements, schedules, pay dates, and documents for the Hideaway team are all in one place.</p>
       </div>
       <a href="/auth/change-password" class="btn-secondary btn-sm-link">Change Password</a>
     </div>
@@ -198,7 +197,7 @@ function dashboardHTML(user, announcements, schedule, payDates, docs) {
         <section class="dash-section">
           <div class="section-header">
             <h2>Upcoming Schedule</h2>
-            <a href="/portal/schedule" class="section-link">View all →</a>
+            <a href="/portal/schedule" class="section-link">View all -></a>
           </div>
           ${schedSection}
         </section>
@@ -208,7 +207,7 @@ function dashboardHTML(user, announcements, schedule, payDates, docs) {
         <section class="dash-section">
           <div class="section-header">
             <h2>Next Pay Dates</h2>
-            <a href="/portal/pay" class="section-link">Full schedule →</a>
+            <a href="/portal/pay" class="section-link">Full schedule -></a>
           </div>
           <div class="pay-list">${paySection}</div>
         </section>
@@ -216,7 +215,7 @@ function dashboardHTML(user, announcements, schedule, payDates, docs) {
         <section class="dash-section">
           <div class="section-header">
             <h2>Quick Documents</h2>
-            <a href="/portal/documents" class="section-link">All docs →</a>
+            <a href="/portal/documents" class="section-link">All docs -></a>
           </div>
           ${docsSection}
         </section>
@@ -225,7 +224,7 @@ function dashboardHTML(user, announcements, schedule, payDates, docs) {
           <h2>Important Contacts</h2>
           <div class="contact-list">
             <div class="contact-item">
-              <span class="contact-role">Pool Manager</span>
+              <span class="contact-role">Operations Office</span>
               <a href="tel:+19725231685" class="contact-val">(972) 523-1685</a>
             </div>
             <div class="contact-item">
@@ -257,8 +256,8 @@ function scheduleHTML(events) {
       ${evts.map(e => `
         <div class="sched-event">
           <div class="sched-event-title">${e.title}</div>
-          ${e.start_time ? `<div class="sched-event-meta">⏰ ${e.start_time}${e.end_time ? ' – ' + e.end_time : ''}</div>` : ''}
-          ${e.location ? `<div class="sched-event-meta">📍 ${e.location}</div>` : ''}
+          ${e.start_time ? `<div class="sched-event-meta">Time: ${e.start_time}${e.end_time ? ' - ' + e.end_time : ''}</div>` : ''}
+          ${e.location ? `<div class="sched-event-meta">Location: ${e.location}</div>` : ''}
           ${e.description ? `<div class="sched-event-desc">${e.description}</div>` : ''}
         </div>`).join('')}
     </div>`).join('') : `<div class="empty-card">No upcoming events or shifts scheduled. Check back soon.</div>`;
@@ -266,8 +265,8 @@ function scheduleHTML(events) {
   return `
   <div class="portal-wrap">
     <div class="page-header">
-      <h1>Schedule & Events</h1>
-      <p class="page-sub">Upcoming shifts, training dates, and pool events.</p>
+      <h1>Schedule and Events</h1>
+      <p class="page-sub">Upcoming shifts, training dates, and staff events.</p>
     </div>
     <div class="sched-list">${content}</div>
   </div>`;
@@ -291,13 +290,13 @@ function payHTML(rows) {
             const isPast = new Date(p.pay_date) < now;
             const isNear = !isPast && (new Date(p.pay_date) - now) < 7 * 24 * 60 * 60 * 1000;
             const status = isPast ? '<span class="badge badge-paid">Paid</span>'
-                         : isNear ? '<span class="badge badge-upcoming">Upcoming</span>'
-                         : '<span class="badge badge-future">Scheduled</span>';
+              : isNear ? '<span class="badge badge-upcoming">Upcoming</span>'
+              : '<span class="badge badge-future">Scheduled</span>';
             return `
             <tr class="${isPast ? 'row-past' : ''}">
               <td><strong>${p.period_label}</strong></td>
               <td>${fmtDate(p.pay_date)}</td>
-              <td>${p.notes || '—'}</td>
+              <td>${p.notes || '-'}</td>
               <td>${status}</td>
             </tr>`;
           }).join('')}
@@ -312,7 +311,7 @@ function payHTML(rows) {
       <p class="page-sub">Your pay dates and period information. Questions? Email <a href="mailto:brant@brantborden.com">brant@brantborden.com</a>.</p>
     </div>
     <div class="info-card">
-      <strong>Pay Info:</strong> HAWL Pool staff are paid bi-weekly via direct deposit. Make sure your banking info is on file with management.
+      <strong>Pay Info:</strong> Hideaway staff are paid bi-weekly via direct deposit. Make sure your banking info is on file with management.
     </div>
     ${content}
   </div>`;
@@ -320,11 +319,11 @@ function payHTML(rows) {
 
 function documentsHTML(grouped) {
   const categoryLabels = {
-    policy:    'Policies & Procedures',
-    training:  'Training & Certification',
-    forms:     'Forms & Applications',
+    policy: 'Policies and Procedures',
+    training: 'Training and Certification',
+    forms: 'Forms and Applications',
     emergency: 'Emergency Protocols',
-    general:   'General Documents',
+    general: 'General Documents',
   };
 
   const content = Object.keys(grouped).length ? Object.entries(grouped).map(([cat, docs]) => `
@@ -333,16 +332,16 @@ function documentsHTML(grouped) {
       <div class="doc-grid">
         ${docs.map(d => `
           <a href="/portal/document/${d.id}" class="doc-card" target="_blank" rel="noopener">
-            <span class="doc-icon">📄</span>
+            <span class="doc-icon">Doc</span>
             <div class="doc-info">
               <span class="doc-title">${d.title}</span>
               ${d.description ? `<span class="doc-desc">${d.description}</span>` : ''}
-              <span class="doc-action">Open →</span>
+              <span class="doc-action">Open -></span>
             </div>
           </a>`).join('')}
       </div>
     </div>`).join('') :
-    `<div class="empty-card">No documents have been uploaded yet. Contact your manager for training materials.</div>`;
+    `<div class="empty-card">No documents have been uploaded yet. Contact your manager for staff materials.</div>`;
 
   return `
   <div class="portal-wrap">
@@ -354,16 +353,17 @@ function documentsHTML(grouped) {
   </div>`;
 }
 
-// ── Date helpers ───────────────────────────────────────────────────────
 function fmtDate(d) {
   if (!d) return '';
   const dt = new Date(d);
   return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 }
+
 function fmtMonth(d) {
   if (!d) return '';
   return new Date(d).toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
 }
+
 function fmtDay(d) {
   if (!d) return '';
   return new Date(d).toLocaleDateString('en-US', { day: 'numeric', timeZone: 'UTC' });
