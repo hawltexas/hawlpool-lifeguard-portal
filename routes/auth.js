@@ -135,20 +135,32 @@ function changePwHTML(msg) {
     ${msgBlock}
     <div class="card" style="max-width:440px;">
       <form method="POST" action="/auth/change-password" class="portal-form">
-        <div class="field">
-          <label>Current Password</label>
-          <input type="password" name="current_password" required placeholder="Current password">
+        <div class="field password-field">
+            <label>Current Password</label>
+          <div class="password-input-wrap">
+              <input id="current_password" type="password" name="current_password" required placeholder="Current password">
+              <button type="button" class="toggle-password" onclick="togglePassword('current_password', this)">
+              <img src="/icons/eye.svg" alt="Show">
+            </button>
+          </div>
         </div>
-        <div class="field">
-          <label>New Password <span class="hint">(min 8 chars)</span></label>
-          <input type="password" name="new_password" required minlength="8" placeholder="New password">
-        </div>
-        <div class="field">
-          <label>Confirm New Password</label>
-          <input type="password" name="confirm_password" required placeholder="Confirm new password">
-        </div>
-        <button type="submit" class="btn-primary">Update Password</button>
-      </form>
+    <div class="field password-field">
+      <label>New Password <span class="hint">(min 8 chars)</span></label>
+    <div class="password-input-wrap">
+      <input id="new_password" type="password" name="new_password" required minlength="8" placeholder="New password">
+        <button type="button" class="toggle-password" onclick="togglePassword('new_password', this)">
+        <img src="/icons/eye.svg" alt="Show">
+      </button>
     </div>
+  </div>
+  <div class="field password-field">
+    <label>Confirm New Password</label>
+  <div class="password-input-wrap">
+    <input id="confirm_password" type="password" name="confirm_password" required placeholder="Confirm new password">
+      <button type="button" class="toggle-password" onclick="togglePassword('confirm_password', this)">
+        <img src="/icons/eye.svg" alt="Show">
+      </button>
+    </div>
+  </div>
   </div>`;
 }
