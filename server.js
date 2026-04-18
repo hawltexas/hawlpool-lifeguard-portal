@@ -47,7 +47,7 @@ const SQLiteStore = require('connect-sqlite3')(session);
 
 app.use(session({
   store: new SQLiteStore({ db: 'sessions.db', dir: './data' }),
-  secret: process.env.SESSION_SECRET || 'hawl-pool-change-in-production',
+  secret: process.env.SESSION_SECRET || 'hawl-staff-change-in-production',
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -89,7 +89,7 @@ process.on('unhandledRejection', err => console.error('Unhandled:', err));
 (async () => {
   try {
     await initialize();
-    app.listen(PORT, () => console.log(`HAWL Lifeguard Portal running on port ${PORT}`));
+    app.listen(PORT, () => console.log(`HAWL Staff Portal running on port ${PORT}`));
   } catch (err) {
     console.error('Failed to start:', err);
     process.exit(1);
