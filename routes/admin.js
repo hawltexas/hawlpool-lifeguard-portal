@@ -3,7 +3,6 @@ const bcrypt   = require('bcryptjs');
 const router   = express.Router();
 const AWS      = require('aws-sdk');
 const multer   = require('multer');
-const multerS3 = require('multer-s3');
 const path     = require('path');
 const fs       = require('fs');
 const { pool } = require('../database');
@@ -30,11 +29,7 @@ function safeUploadName(originalName = 'upload') {
 }
 
 const storage = process.env.S3_BUCKET_NAME
-  ? multerS3({
-      s3,
-      bucket: process.env.S3_BUCKET_NAME,
-      key: (req, file, cb) => cb(null, safeUploadName(file.originalname)),
-    })
+  ? multer.memoryStorage()
   : multer.diskStorage({
       destination: (req, file, cb) => cb(null, localDocumentsDir),
       filename: (req, file, cb) => cb(null, safeUploadName(file.originalname)),
@@ -152,14 +147,31 @@ router.post('/document/add', handleUpload('file'), async (req, res) => {
     req.session.adminMsg = { type: 'error', text: 'Title and file are required.' };
     return res.redirect('/admin');
   }
-  const filePath = req.file ? (req.file.key || req.file.filename) : filename.trim();
   try {
+    let filePath = filename ? filename.trim() : null;
+
+    if (req.file) {
+      if (process.env.S3_BUCKET_NAME) {
+        const objectKey = safeUploadName(req.file.originalname);
+        await s3.upload({
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: objectKey,
+          Body: req.file.buffer,
+          ContentType: req.file.mimetype,
+        }).promise();
+        filePath = objectKey;
+      } else {
+        filePath = req.file.filename;
+      }
+    }
+
     await pool.query(
       `INSERT INTO documents (title, description, filename, category) VALUES ($1,$2,$3,$4)`,
       [title.trim(), description || '', filePath, category || 'general']
     );
     req.session.adminMsg = { type: 'success', text: `Document "${title}" added.` };
   } catch (err) {
+    console.error('Could not add document:', err);
     req.session.adminMsg = { type: 'error', text: 'Could not add document.' };
   }
   res.redirect('/admin');
