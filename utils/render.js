@@ -67,10 +67,10 @@ function renderPage(title, bodyHTML, user = null) {
 
     if (input.type === "password") {
       input.type = "text";
-      img.src = "/icons/eye-off.svg";
+      img.src = "public/icons/eye-off.svg";
     } else {
       input.type = "password";
-      img.src = "/icons/eye.svg";
+      img.src = "public/icons/eye.svg";
     }
   }
   </script>
